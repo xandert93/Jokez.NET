@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Jokez.Data;
 using Jokez.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Jokez.Controllers
 {
@@ -20,9 +21,23 @@ namespace Jokez.Controllers
         }
 
         // GET: Jokes
+        // 🔥 unlike in Express, where each function is called a controller, in ASP.NET, each function is called an "action"
+        // 🔥 bit that comes after public specifies the return type of the function. E.g. View(<view-path>, <data>) returns a Task which is of type IActionResult
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Joke.ToListAsync());
+            return View("Index", await _context.Joke.ToListAsync()); // 
+        }
+
+        // GET: Jokes/Search
+        public async Task<IActionResult> Search()
+        {
+            return View("Search");
+        }
+
+        // POST: Jokes/SearchResults
+        public async Task<IActionResult> SearchResults(String SearchTerm)
+        {
+            return View("Index", await _context.Joke.Where(j => j.Question.Contains(SearchTerm)).ToListAsync());
         }
 
         // GET: Jokes/Details/5
@@ -44,6 +59,9 @@ namespace Jokez.Controllers
         }
 
         // GET: Jokes/Create
+        // use Authorize decorator to enforce authentication before the Create action is called
+        // enable it by declaring the use of the following library at the top of this file: using Microsoft.AspNetCore.Authorization;
+        [Authorize]
         public IActionResult Create()
         {
             return View();
@@ -54,6 +72,7 @@ namespace Jokez.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize]
         public async Task<IActionResult> Create([Bind("Id,Question,Answer")] Joke joke)
         {
             if (ModelState.IsValid)
@@ -86,6 +105,7 @@ namespace Jokez.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Question,Answer")] Joke joke)
         {
             if (id != joke.Id)
@@ -117,6 +137,7 @@ namespace Jokez.Controllers
         }
 
         // GET: Jokes/Delete/5
+        [Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -137,6 +158,7 @@ namespace Jokez.Controllers
         // POST: Jokes/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var joke = await _context.Joke.FindAsync(id);
